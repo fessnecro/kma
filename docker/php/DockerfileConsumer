@@ -1,0 +1,33 @@
+FROM php:8.2-fpm-alpine
+
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/install-php-extensions && install-php-extensions \
+    pdo_mysql \
+    intl \
+    zip  \
+    gd \
+    imagick \
+    exif\
+    xdebug\
+    opcache\
+    bcmath\
+    sockets
+
+COPY conf.d/* /usr/local/etc/php/conf.d/
+COPY php.ini /usr/local/etc/php/
+
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+RUN apk --no-cache add jq
+RUN apk --no-cache add git
+
+# Add user for application
+RUN addgroup --gid 1000 www
+RUN adduser --disabled-password --home /var/www/html --uid 1000 --ingroup www www
+
+# Change current user to www
+USER www
+
+CMD ["php", "./rabbit/Consumer.php"]
